@@ -1,480 +1,139 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
-import {
-  getPsychologist,
-  getPsychologistServices,
-  updateProfile,
-  createService,
-  deleteService,
-} from '../../api/psychologists'
-import { getPsychologistSchedule, batchCreateSlots, deleteSlot } from '../../api/slots'
+import { getPsychologist, updateProfile } from '../../api/psychologists'
+import { getReviews } from '../../api/reviews'
+import { uploadAvatar } from '../../api/users'
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import Avatar from '../../components/Avatar'
-import { format, addDays, startOfDay } from 'date-fns'
+import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
-function formatTime(dt) {
-  return format(new Date(dt), 'HH:mm')
-}
-
-function groupSlotsByDate(slots) {
-  return slots.reduce((acc, slot) => {
-    const day = slot.startTime.split('T')[0]
-    if (!acc[day]) acc[day] = []
-    acc[day].push(slot)
-    return acc
-  }, {})
-}
-
 export default function Profile() {
-  const { user } = useAuth()
-  const navigate = useNavigate()
+  const { user, updateUser } = useAuth()
   const [profile, setProfile] = useState(null)
-  const [services, setServices] = useState([])
   const [loading, setLoading] = useState(true)
-
-  const [profileForm, setProfileForm] = useState({ bio: '', education: '', experienceYears: '', photoUrl: '' })
-  const [savingProfile, setSavingProfile] = useState(false)
-
-  const [serviceForm, setServiceForm] = useState({ name: '', description: '', price: '', durationMinutes: '' })
-  const [addingService, setAddingService] = useState(false)
-  const [showServiceForm, setShowServiceForm] = useState(false)
-
-  const [scheduleDate, setScheduleDate] = useState(() => new Date().toISOString().split('T')[0])
-  const [slots, setSlots] = useState([])
-  const [loadingSlots, setLoadingSlots] = useState(false)
-
-  const [showSlotForm, setShowSlotForm] = useState(false)
-  const [slotForm, setSlotForm] = useState({ fromTime: '09:00', toTime: '17:00', duration: '60' })
-  const [creatingSlots, setCreatingSlots] = useState(false)
+  const [pForm, setPForm] = useState({ bio: '', education: '', experienceYears: '' })
+  const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [reviews, setReviews] = useState([])
+  const fileRef = useRef(null)
 
   useEffect(() => {
     if (!user?.userId) return
-    Promise.all([getPsychologist(user.userId), getPsychologistServices(user.userId)])
-      .then(([p, s]) => {
+    Promise.all([getPsychologist(user.userId), getReviews(user.userId)])
+      .then(([p, r]) => {
         setProfile(p)
-        setServices(s)
-        setProfileForm({
-          bio: p.bio || '',
-          education: p.education || '',
-          experienceYears: p.experienceYears || '',
-          photoUrl: p.photoUrl || '',
-        })
+        setPForm({ bio: p.bio||'', education: p.education||'', experienceYears: p.experienceYears||'' })
+        setReviews(r)
       })
       .catch(() => toast.error('Ошибка загрузки профиля'))
       .finally(() => setLoading(false))
   }, [user?.userId])
 
-  const fetchSlots = (date) => {
-    setLoadingSlots(true)
-    const from = date
-    const to = date
-    getPsychologistSchedule(from, to)
-      .then(setSlots)
-      .catch(() => toast.error('Ошибка загрузки расписания'))
-      .finally(() => setLoadingSlots(false))
-  }
-
-  useEffect(() => {
-    if (user?.role === 'PSYCHOLOGIST') fetchSlots(scheduleDate)
-  }, [scheduleDate, user?.role])
-
-  const handleSaveProfile = async (e) => {
-    e.preventDefault()
-    setSavingProfile(true)
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
     try {
-      const updated = await updateProfile({
-        ...profileForm,
-        experienceYears: profileForm.experienceYears ? Number(profileForm.experienceYears) : null,
-      })
-      setProfile(updated)
-      toast.success('Профиль сохранён')
+      const updated = await uploadAvatar(file)
+      updateUser({ photoUrl: updated.photoUrl })
+      toast.success('Фото обновлено')
     } catch {
-      toast.error('Ошибка сохранения')
+      toast.error('Ошибка загрузки фото')
     } finally {
-      setSavingProfile(false)
+      setUploading(false)
+      e.target.value = ''
     }
   }
 
-  const handleAddService = async (e) => {
-    e.preventDefault()
-    setAddingService(true)
+  const handleSave = async (e) => {
+    e.preventDefault(); setSaving(true)
     try {
-      const service = await createService({
-        name: serviceForm.name,
-        description: serviceForm.description || null,
-        price: Number(serviceForm.price),
-        durationMinutes: Number(serviceForm.durationMinutes),
-      })
-      setServices((prev) => [...prev, service])
-      setServiceForm({ name: '', description: '', price: '', durationMinutes: '' })
-      setShowServiceForm(false)
-      toast.success('Услуга добавлена')
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Ошибка добавления услуги')
-    } finally {
-      setAddingService(false)
-    }
-  }
-
-  const handleDeleteService = async (serviceId) => {
-    try {
-      await deleteService(serviceId)
-      setServices((prev) => prev.filter((s) => s.id !== serviceId))
-      toast.success('Услуга удалена')
-    } catch {
-      toast.error('Ошибка удаления услуги')
-    }
-  }
-
-  const handleBatchCreateSlots = async (e) => {
-    e.preventDefault()
-    setCreatingSlots(true)
-    try {
-      const created = await batchCreateSlots({
-        date: scheduleDate,
-        fromTime: slotForm.fromTime + ':00',
-        toTime: slotForm.toTime + ':00',
-        slotDurationMinutes: Number(slotForm.duration),
-      })
-      setSlots((prev) => {
-        const existingIds = new Set(prev.map((s) => s.id))
-        const newSlots = created.filter((s) => !existingIds.has(s.id))
-        return [...prev, ...newSlots].sort((a, b) => a.startTime.localeCompare(b.startTime))
-      })
-      setShowSlotForm(false)
-      toast.success(`Создано ${created.length} слот(ов)`)
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Ошибка создания слотов')
-    } finally {
-      setCreatingSlots(false)
-    }
-  }
-
-  const handleDeleteSlot = async (slotId) => {
-    try {
-      await deleteSlot(slotId)
-      setSlots((prev) => prev.filter((s) => s.id !== slotId))
-      toast.success('Слот удалён')
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Ошибка удаления')
-    }
+      const updated = await updateProfile({ ...pForm, experienceYears: pForm.experienceYears ? Number(pForm.experienceYears) : null })
+      setProfile(updated); toast.success('Профиль сохранён')
+    } catch { toast.error('Ошибка сохранения') }
+    finally { setSaving(false) }
   }
 
   if (loading) return <Spinner className="py-20" />
 
-  const today = new Date().toISOString().split('T')[0]
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Avatar name={`${user?.firstName} ${user?.lastName}`} size="xl" />
+    <div className="space-y-5">
+      <div className="card flex items-center gap-4">
+        <div className="relative group cursor-pointer flex-shrink-0" onClick={() => fileRef.current?.click()}>
+          <Avatar name={`${user?.firstName} ${user?.lastName}`} size="xl" src={user?.photoUrl} />
+          <div className="absolute inset-0 rounded-full flex items-center justify-center transition-opacity duration-150"
+            style={{ opacity: uploading ? 1 : 0, backgroundColor: 'rgba(15,32,53,0.5)' }}
+            onMouseEnter={e => !uploading && (e.currentTarget.style.opacity = '1')}
+            onMouseLeave={e => !uploading && (e.currentTarget.style.opacity = '0')}>
+            {uploading
+              ? <div className="w-5 h-5 rounded-full animate-spin" style={{ border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff' }} />
+              : <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            }
+          </div>
+        </div>
+        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} />
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {user?.firstName} {user?.lastName}
-          </h1>
-          <p className="text-gray-500 text-sm">{user?.email}</p>
+          <p className="font-bold" style={{ color: 'var(--text)' }}>{user?.firstName} {user?.lastName}</p>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>{user?.email}</p>
+          <span className="badge-blue mt-1.5 inline-flex">Психолог</span>
         </div>
       </div>
 
       <div className="card">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Информация о профиле</h2>
-        <form onSubmit={handleSaveProfile} className="space-y-4">
+        <h2 className="text-base font-bold mb-4" style={{ color: 'var(--text)' }}>Информация о профиле</h2>
+        <form onSubmit={handleSave} className="space-y-3">
           <div>
             <label className="label">О себе</label>
-            <textarea
-              className="input resize-none"
-              rows={4}
-              value={profileForm.bio}
-              onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
-              placeholder="Расскажите о своём подходе и специализации..."
-            />
+            <textarea className="input resize-none" rows={4} value={pForm.bio}
+              onChange={e => setPForm({ ...pForm, bio: e.target.value })}
+              placeholder="Расскажите о своём подходе и специализации..." />
           </div>
           <div>
             <label className="label">Образование</label>
-            <input
-              type="text"
-              className="input"
-              value={profileForm.education}
-              onChange={(e) => setProfileForm({ ...profileForm, education: e.target.value })}
-              placeholder="МГУ, кафедра психологии..."
-            />
+            <input type="text" className="input" value={pForm.education}
+              onChange={e => setPForm({ ...pForm, education: e.target.value })}
+              placeholder="МГУ, кафедра психологии..." />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label">Опыт (лет)</label>
-              <input
-                type="number"
-                className="input"
-                value={profileForm.experienceYears}
-                onChange={(e) => setProfileForm({ ...profileForm, experienceYears: e.target.value })}
-                min={0}
-                placeholder="5"
-              />
-            </div>
-            <div>
-              <label className="label">Фото URL</label>
-              <input
-                type="url"
-                className="input"
-                value={profileForm.photoUrl}
-                onChange={(e) => setProfileForm({ ...profileForm, photoUrl: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
+          <div>
+            <label className="label">Опыт (лет)</label>
+            <input type="number" className="input" value={pForm.experienceYears}
+              onChange={e => setPForm({ ...pForm, experienceYears: e.target.value })}
+              min={0} placeholder="5" />
           </div>
-          <button type="submit" className="btn-primary" disabled={savingProfile}>
-            {savingProfile ? 'Сохраняем...' : 'Сохранить профиль'}
+          <button type="submit" className="btn-primary" disabled={saving}>
+            {saving ? 'Сохраняем...' : 'Сохранить'}
           </button>
         </form>
       </div>
 
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Мои услуги</h2>
-          <button
-            className="btn-primary text-sm"
-            onClick={() => setShowServiceForm(!showServiceForm)}
-          >
-            {showServiceForm ? 'Отмена' : '+ Добавить'}
-          </button>
-        </div>
-
-        {showServiceForm && (
-          <form onSubmit={handleAddService} className="bg-gray-50 rounded-xl p-4 mb-4 space-y-3">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2">
-                <label className="label">Название</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={serviceForm.name}
-                  onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })}
-                  required
-                  placeholder="Индивидуальная консультация"
-                />
-              </div>
-              <div>
-                <label className="label">Цена (₽)</label>
-                <input
-                  type="number"
-                  className="input"
-                  value={serviceForm.price}
-                  onChange={(e) => setServiceForm({ ...serviceForm, price: e.target.value })}
-                  required
-                  min={1}
-                  placeholder="3000"
-                />
-              </div>
-              <div>
-                <label className="label">Длительность (мин)</label>
-                <input
-                  type="number"
-                  className="input"
-                  value={serviceForm.durationMinutes}
-                  onChange={(e) =>
-                    setServiceForm({ ...serviceForm, durationMinutes: e.target.value })
-                  }
-                  required
-                  min={15}
-                  placeholder="60"
-                />
-              </div>
-              <div className="col-span-2">
-                <label className="label">Описание</label>
-                <textarea
-                  className="input resize-none"
-                  rows={2}
-                  value={serviceForm.description}
-                  onChange={(e) =>
-                    setServiceForm({ ...serviceForm, description: e.target.value })
-                  }
-                  placeholder="Краткое описание услуги..."
-                />
-              </div>
-            </div>
-            <button type="submit" className="btn-primary w-full" disabled={addingService}>
-              {addingService ? 'Добавляем...' : 'Добавить услугу'}
-            </button>
-          </form>
-        )}
-
-        {services.length === 0 ? (
-          <div className="text-center py-8 text-gray-400 text-sm">Добавьте первую услугу</div>
+      <div>
+        <h2 className="text-base font-bold mb-3" style={{ color: 'var(--text)' }}>
+          Отзывы ({reviews.length})
+        </h2>
+        {reviews.length === 0 ? (
+          <div className="card text-center py-10" style={{ color: 'var(--text-faint)' }}>Отзывов пока нет</div>
         ) : (
           <div className="space-y-3">
-            {services.map((service) => (
-              <div
-                key={service.id}
-                className="flex items-start justify-between gap-3 p-3 bg-gray-50 rounded-xl"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900">{service.name}</p>
-                  {service.description && (
-                    <p className="text-sm text-gray-500 mt-0.5">{service.description}</p>
-                  )}
-                  <div className="flex gap-3 text-xs text-gray-400 mt-1">
-                    <span>{service.price} ₽</span>
-                    <span>{service.durationMinutes} мин</span>
+            {reviews.map(r => (
+              <div key={r.id} className="card p-4">
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <div className="flex items-center gap-2">
+                    <Avatar name={r.clientName} size="sm" src={r.clientPhotoUrl} />
+                    <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{r.clientName}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm" style={{ color: '#D97706' }}>{'★'.repeat(r.rating)}</span>
+                    <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                      {format(new Date(r.createdAt), 'd MMM yyyy', { locale: ru })}
+                    </span>
                   </div>
                 </div>
-                <button
-                  className="text-red-400 hover:text-red-600 text-sm flex-shrink-0 transition-colors"
-                  onClick={() => handleDeleteService(service.id)}
-                >
-                  Удалить
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="card">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Расписание</h2>
-
-        <div className="flex flex-wrap items-center gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            <button
-              className="btn-secondary px-2 py-1 text-sm"
-              onClick={() => {
-                const d = new Date(scheduleDate)
-                d.setDate(d.getDate() - 1)
-                setScheduleDate(d.toISOString().split('T')[0])
-              }}
-            >
-              ‹
-            </button>
-            <input
-              type="date"
-              className="input w-auto"
-              value={scheduleDate}
-              onChange={(e) => setScheduleDate(e.target.value)}
-            />
-            <button
-              className="btn-secondary px-2 py-1 text-sm"
-              onClick={() => {
-                const d = new Date(scheduleDate)
-                d.setDate(d.getDate() + 1)
-                setScheduleDate(d.toISOString().split('T')[0])
-              }}
-            >
-              ›
-            </button>
-          </div>
-          <span className="text-sm text-gray-500">
-            {format(new Date(scheduleDate + 'T12:00'), 'EEEE, d MMMM', { locale: ru })}
-          </span>
-          <button
-            className="btn-primary text-sm ml-auto"
-            onClick={() => setShowSlotForm(!showSlotForm)}
-          >
-            {showSlotForm ? 'Отмена' : '+ Создать слоты'}
-          </button>
-        </div>
-
-        {showSlotForm && (
-          <form
-            onSubmit={handleBatchCreateSlots}
-            className="bg-indigo-50 rounded-xl p-4 mb-4 space-y-3"
-          >
-            <p className="text-sm font-medium text-indigo-800">
-              Создать слоты на{' '}
-              {format(new Date(scheduleDate + 'T12:00'), 'd MMMM', { locale: ru })}
-            </p>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="label">С</label>
-                <input
-                  type="time"
-                  className="input"
-                  value={slotForm.fromTime}
-                  onChange={(e) => setSlotForm({ ...slotForm, fromTime: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="label">По</label>
-                <input
-                  type="time"
-                  className="input"
-                  value={slotForm.toTime}
-                  onChange={(e) => setSlotForm({ ...slotForm, toTime: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="label">Интервал</label>
-                <select
-                  className="input"
-                  value={slotForm.duration}
-                  onChange={(e) => setSlotForm({ ...slotForm, duration: e.target.value })}
-                >
-                  <option value="30">30 мин</option>
-                  <option value="45">45 мин</option>
-                  <option value="60">60 мин</option>
-                  <option value="90">90 мин</option>
-                </select>
-              </div>
-            </div>
-            <button type="submit" className="btn-primary w-full" disabled={creatingSlots}>
-              {creatingSlots ? 'Создаём...' : 'Создать слоты'}
-            </button>
-          </form>
-        )}
-
-        {loadingSlots ? (
-          <Spinner className="py-8" />
-        ) : slots.length === 0 ? (
-          <div className="text-center py-8 text-gray-400 text-sm">
-            Нет слотов на этот день
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {slots.map((slot) => (
-              <div
-                key={slot.id}
-                className={`flex items-center justify-between gap-3 p-3 rounded-xl ${
-                  slot.isBooked ? 'bg-orange-50 border border-orange-100' : 'bg-gray-50'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-sm font-semibold text-gray-800">
-                    {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
-                  </span>
-                  {slot.isBooked ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
-                        Занято
-                      </span>
-                      {slot.clientName && (
-                        <span className="text-sm text-gray-700">{slot.clientName}</span>
-                      )}
-                      {slot.sessionId && (
-                        <button
-                          className="text-xs text-indigo-600 hover:underline"
-                          onClick={() => navigate(`/sessions/${slot.sessionId}`)}
-                        >
-                          → сессия
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                      Свободно
-                    </span>
-                  )}
-                </div>
-                {!slot.isBooked && (
-                  <button
-                    className="text-red-400 hover:text-red-600 text-xs transition-colors flex-shrink-0"
-                    onClick={() => handleDeleteSlot(slot.id)}
-                  >
-                    Удалить
-                  </button>
-                )}
+                {r.content && <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{r.content}</p>}
               </div>
             ))}
           </div>

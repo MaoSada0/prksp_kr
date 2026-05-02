@@ -16,8 +16,10 @@ public class ChatResponse {
     private UUID id;
     private UUID clientId;
     private String clientName;
+    private String clientPhotoUrl;
     private UUID psychologistId;
     private String psychologistName;
+    private String psychologistPhotoUrl;
     private LocalDateTime createdAt;
     private MessageResponse lastMessage;
 }

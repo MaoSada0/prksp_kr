@@ -74,6 +74,7 @@ public class ReviewService {
                 .psychologistId(review.getPsychologist().getId())
                 .clientId(review.getClient().getId())
                 .clientName(review.getClient().getFirstName() + " " + review.getClient().getLastName())
+                .clientPhotoUrl(review.getClient().getPhotoUrl())
                 .rating(review.getRating())
                 .content(review.getContent())
                 .createdAt(review.getCreatedAt())

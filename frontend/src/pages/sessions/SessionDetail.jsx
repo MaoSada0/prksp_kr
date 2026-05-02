@@ -9,10 +9,10 @@ import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
 const statusConfig = {
-  SCHEDULED: { label: 'Запланирована', cls: 'bg-blue-100 text-blue-700' },
-  IN_PROGRESS: { label: 'Идёт', cls: 'bg-yellow-100 text-yellow-700' },
-  COMPLETED: { label: 'Завершена', cls: 'bg-green-100 text-green-700' },
-  CANCELLED: { label: 'Отменена', cls: 'bg-red-100 text-red-700' },
+  SCHEDULED:   { label: 'Запланирована', cls: 'badge-blue' },
+  IN_PROGRESS: { label: 'Идёт',          cls: 'badge-amber' },
+  COMPLETED:   { label: 'Завершена',     cls: 'badge-green' },
+  CANCELLED:   { label: 'Отменена',      cls: 'badge-red' },
 }
 
 export default function SessionDetail() {
@@ -28,22 +28,14 @@ export default function SessionDetail() {
 
   useEffect(() => {
     Promise.all([getSession(id), getComments(id)])
-      .then(([s, c]) => {
-        setSession(s)
-        setComments(c)
-      })
+      .then(([s, c]) => { setSession(s); setComments(c) })
       .catch(() => toast.error('Ошибка загрузки сессии'))
       .finally(() => setLoading(false))
   }, [id])
 
   const handleStatusUpdate = async (status) => {
-    try {
-      const updated = await updateSessionStatus(id, { status })
-      setSession(updated)
-      toast.success('Статус обновлён')
-    } catch {
-      toast.error('Ошибка обновления статуса')
-    }
+    try { setSession(await updateSessionStatus(id, { status })); toast.success('Статус обновлён') }
+    catch { toast.error('Ошибка обновления статуса') }
   }
 
   const handleAddComment = async (e) => {
@@ -51,119 +43,63 @@ export default function SessionDetail() {
     if (!commentText.trim()) return
     setSubmitting(true)
     try {
-      const comment = await addComment(id, { content: commentText.trim() })
-      setComments((prev) => [...prev, comment])
+      const c = await addComment(id, { content: commentText.trim() })
+      setComments(prev => [...prev, c])
       setCommentText('')
-    } catch {
-      toast.error('Ошибка добавления комментария')
-    } finally {
-      setSubmitting(false)
-    }
+    } catch { toast.error('Ошибка добавления комментария') }
+    finally { setSubmitting(false) }
   }
 
   if (loading) return <Spinner className="py-20" />
   if (!session) return null
 
-  const status = statusConfig[session.status]
-  const canStart = session.status === 'SCHEDULED'
+  const st = statusConfig[session.status]
+  const canStart    = session.status === 'SCHEDULED'
   const canComplete = session.status === 'IN_PROGRESS'
-  const canCancel = session.status === 'SCHEDULED' || session.status === 'IN_PROGRESS'
+  const canCancel   = session.status === 'SCHEDULED' || session.status === 'IN_PROGRESS'
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/sessions')} className="text-gray-400 hover:text-gray-600">
-          ←
+        <button
+          onClick={() => navigate('/sessions')}
+          className="text-sm px-3 py-1.5 rounded-lg transition-colors duration-100"
+          style={{ border: '1px solid var(--border)', color: 'var(--text-muted)' }}
+          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--blue-light)'}
+          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+        >
+          ← Назад
         </button>
-        <h1 className="text-2xl font-bold text-gray-900">Сессия</h1>
+        <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Сессия</h1>
       </div>
 
       <div className="card space-y-4">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">{session.serviceName}</h2>
-            <span className={`inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full font-medium ${status.cls}`}>
-              {status.label}
-            </span>
+            <h2 className="text-base font-bold mb-1.5" style={{ color: 'var(--text)' }}>{session.serviceName}</h2>
+            <span className={st.cls}>{st.label}</span>
           </div>
           <div className="flex flex-wrap gap-2">
-            {canStart && (
-              <button
-                className="btn-primary text-sm"
-                onClick={() => handleStatusUpdate('IN_PROGRESS')}
-              >
-                Начать
-              </button>
-            )}
-            {canComplete && (
-              <button
-                className="btn-primary text-sm"
-                onClick={() => handleStatusUpdate('COMPLETED')}
-              >
-                Завершить
-              </button>
-            )}
-            {canCancel && (
-              <button
-                className="btn-danger text-sm"
-                onClick={() => handleStatusUpdate('CANCELLED')}
-              >
-                Отменить
-              </button>
-            )}
+            {canStart    && <button className="btn-primary text-xs px-4 py-1.5" onClick={() => handleStatusUpdate('IN_PROGRESS')}>Начать</button>}
+            {canComplete && <button className="btn-primary text-xs px-4 py-1.5" onClick={() => handleStatusUpdate('COMPLETED')}>Завершить</button>}
+            {canCancel   && <button className="btn-danger  text-xs px-4 py-1.5" onClick={() => handleStatusUpdate('CANCELLED')}>Отменить</button>}
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-4 text-sm">
-          <div className="space-y-2">
-            <div>
-              <span className="text-gray-500">Клиент:</span>{' '}
-              <span className="font-medium text-gray-900">{session.clientName}</span>
-            </div>
-            <div>
-              <span className="text-gray-500">Психолог:</span>{' '}
-              <span className="font-medium text-gray-900">{session.psychologistName}</span>
-            </div>
-            <div>
-              <span className="text-gray-500">Длительность:</span>{' '}
-              <span className="font-medium text-gray-900">{session.serviceDurationMinutes} мин</span>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <div>
-              <span className="text-gray-500">Дата:</span>{' '}
-              <span className="font-medium text-gray-900">
-                {format(new Date(session.scheduledAt), 'd MMMM yyyy, HH:mm', { locale: ru })}
-              </span>
-            </div>
-            {session.startedAt && (
-              <div>
-                <span className="text-gray-500">Начата:</span>{' '}
-                <span className="font-medium text-gray-900">
-                  {format(new Date(session.startedAt), 'HH:mm', { locale: ru })}
-                </span>
-              </div>
-            )}
-            {session.endedAt && (
-              <div>
-                <span className="text-gray-500">Завершена:</span>{' '}
-                <span className="font-medium text-gray-900">
-                  {format(new Date(session.endedAt), 'HH:mm', { locale: ru })}
-                </span>
-              </div>
-            )}
-          </div>
+        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm pt-3" style={{ borderTop: '1px solid var(--border-light)' }}>
+          <Row label="Клиент"      value={session.clientName} />
+          <Row label="Психолог"    value={session.psychologistName} />
+          <Row label="Длительность" value={`${session.serviceDurationMinutes} мин`} />
+          <Row label="Дата" value={format(new Date(session.scheduledAt), 'd MMMM yyyy, HH:mm', { locale: ru })} />
+          {session.startedAt && <Row label="Начата"    value={format(new Date(session.startedAt), 'HH:mm')} />}
+          {session.endedAt   && <Row label="Завершена" value={format(new Date(session.endedAt),   'HH:mm')} />}
         </div>
 
         {session.meetingLink && (
-          <div className="bg-indigo-50 rounded-xl p-3">
-            <p className="text-xs text-indigo-500 font-medium mb-1">Ссылка на созвон</p>
-            <a
-              href={session.meetingLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-indigo-600 hover:underline text-sm break-all"
-            >
+          <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: 'var(--blue-light)', border: '1px solid var(--blue-mid)' }}>
+            <div className="text-xs font-semibold mb-1" style={{ color: 'var(--blue-dark)' }}>Ссылка на созвон</div>
+            <a href={session.meetingLink} target="_blank" rel="noopener noreferrer"
+              className="break-all" style={{ color: 'var(--blue)', textDecoration: 'underline' }}>
               {session.meetingLink}
             </a>
           </div>
@@ -171,34 +107,29 @@ export default function SessionDetail() {
       </div>
 
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">
-          Комментарии ({comments.length})
-        </h2>
+        <h2 className="text-base font-bold mb-3" style={{ color: 'var(--text)' }}>Комментарии ({comments.length})</h2>
 
-        <div className="space-y-3 mb-4">
+        <div className="space-y-2 mb-3">
           {comments.length === 0 ? (
-            <div className="card text-center py-8 text-gray-400 text-sm">Нет комментариев</div>
+            <div className="card text-center py-8 text-sm" style={{ color: 'var(--text-faint)' }}>Нет комментариев</div>
           ) : (
-            comments.map((comment) => {
-              const isMine = comment.authorId === user?.userId
+            comments.map(c => {
+              const isMine = c.authorId === user?.userId
               return (
-                <div key={comment.id} className="card">
+                <div key={c.id} className="card !py-3" style={{ backgroundColor: isMine ? 'var(--blue-light)' : 'var(--surface)' }}>
                   <div className="flex items-start gap-3">
-                    <Avatar name={comment.authorName} size="sm" />
+                    <Avatar name={c.authorName} size="sm" src={c.authorPhotoUrl} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="font-medium text-sm text-gray-900">
-                          {comment.authorName}
-                          {isMine && ' (вы)'}
+                        <span className="text-sm font-semibold" style={{ color: 'var(--text)' }}>{c.authorName}{isMine && ' (вы)'}</span>
+                        <span className="badge" style={{ backgroundColor: 'var(--border-light)', color: 'var(--text-muted)' }}>
+                          {c.authorRole === 'PSYCHOLOGIST' ? 'Психолог' : 'Клиент'}
                         </span>
-                        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">
-                          {comment.authorRole === 'PSYCHOLOGIST' ? 'Психолог' : 'Клиент'}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {format(new Date(comment.createdAt), 'd MMM, HH:mm', { locale: ru })}
+                        <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                          {format(new Date(c.createdAt), 'd MMM, HH:mm', { locale: ru })}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-700">{comment.content}</p>
+                      <p className="text-sm" style={{ color: 'var(--text)' }}>{c.content}</p>
                     </div>
                   </div>
                 </div>
@@ -207,23 +138,23 @@ export default function SessionDetail() {
           )}
         </div>
 
-        <form onSubmit={handleAddComment} className="card flex gap-3 py-3">
-          <input
-            type="text"
-            className="input flex-1"
-            placeholder="Добавить комментарий..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-          />
-          <button
-            type="submit"
-            className="btn-primary px-4"
-            disabled={!commentText.trim() || submitting}
-          >
-            {submitting ? '...' : 'Добавить'}
+        <form onSubmit={handleAddComment} className="card !py-3 flex gap-2">
+          <input type="text" className="input flex-1" placeholder="Добавить комментарий..."
+            value={commentText} onChange={e => setCommentText(e.target.value)} />
+          <button type="submit" className="btn-primary px-4" disabled={!commentText.trim() || submitting}>
+            {submitting ? '...' : 'Отправить'}
           </button>
         </form>
       </div>
+    </div>
+  )
+}
+
+function Row({ label, value }) {
+  return (
+    <div>
+      <span style={{ color: 'var(--text-muted)' }}>{label}: </span>
+      <span className="font-semibold" style={{ color: 'var(--text)' }}>{value}</span>
     </div>
   )
 }

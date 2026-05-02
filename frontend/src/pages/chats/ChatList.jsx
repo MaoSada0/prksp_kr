@@ -13,35 +13,23 @@ export default function ChatList() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
-  useEffect(() => {
-    getChats()
-      .then(setChats)
-      .finally(() => setLoading(false))
-  }, [])
+  useEffect(() => { getChats().then(setChats).finally(() => setLoading(false)) }, [])
 
   if (loading) return <Spinner className="py-20" />
 
-  const getInterlocutor = (chat) => {
-    if (user?.role === 'CLIENT') {
-      return { name: chat.psychologistName, id: chat.psychologistId }
-    }
-    return { name: chat.clientName, id: chat.clientId }
-  }
+  const getName = c => user?.role === 'CLIENT' ? c.psychologistName : c.clientName
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Чаты</h1>
+      <h1 className="text-xl font-bold mb-6" style={{ color: 'var(--text)' }}>Чаты</h1>
 
       {chats.length === 0 ? (
-        <div className="card text-center py-16 text-gray-400">
-          <p className="text-lg mb-2">Нет активных чатов</p>
+        <div className="card text-center py-16">
+          <p className="mb-2" style={{ color: 'var(--text-faint)' }}>Нет активных чатов</p>
           {user?.role === 'CLIENT' && (
-            <p className="text-sm">
+            <p className="text-sm" style={{ color: 'var(--text-faint)' }}>
               Перейдите в{' '}
-              <button
-                className="text-indigo-600 hover:underline"
-                onClick={() => navigate('/psychologists')}
-              >
+              <button className="font-semibold" style={{ color: 'var(--blue)' }} onClick={() => navigate('/psychologists')}>
                 каталог психологов
               </button>{' '}
               и начните диалог
@@ -49,42 +37,37 @@ export default function ChatList() {
           )}
         </div>
       ) : (
-        <div className="card p-0 divide-y divide-gray-100">
-          {chats.map((chat) => {
-            const interlocutor = getInterlocutor(chat)
-            return (
-              <div
-                key={chat.id}
-                className="flex items-center gap-4 p-4 hover:bg-gray-50 cursor-pointer transition-colors"
-                onClick={() => navigate(`/chats/${chat.id}`)}
-              >
-                <Avatar name={interlocutor.name} size="md" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-900">{interlocutor.name}</span>
-                    {chat.lastMessage && (
-                      <span className="text-xs text-gray-400 flex-shrink-0 ml-2">
-                        {formatDistanceToNow(new Date(chat.lastMessage.createdAt), {
-                          addSuffix: true,
-                          locale: ru,
-                        })}
-                      </span>
-                    )}
-                  </div>
-                  {chat.lastMessage ? (
-                    <p className="text-sm text-gray-500 truncate mt-0.5">
-                      {chat.lastMessage.senderName.split(' ')[0]}: {chat.lastMessage.content}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-400 mt-0.5">Нет сообщений</p>
+        <div className="card !p-0 overflow-hidden">
+          {chats.map((chat, idx) => (
+            <div
+              key={chat.id}
+              className="flex items-center gap-3 p-4 cursor-pointer transition-colors duration-100"
+              style={{ borderBottom: idx < chats.length - 1 ? '1px solid var(--border-light)' : 'none' }}
+              onClick={() => navigate(`/chats/${chat.id}`)}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--blue-light)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
+              <Avatar name={getName(chat)} size="md" src={user?.role === 'CLIENT' ? chat.psychologistPhotoUrl : chat.clientPhotoUrl} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-sm" style={{ color: 'var(--text)' }}>{getName(chat)}</span>
+                  {chat.lastMessage && (
+                    <span className="text-xs ml-2 shrink-0" style={{ color: 'var(--text-faint)' }}>
+                      {formatDistanceToNow(new Date(chat.lastMessage.createdAt), { addSuffix: true, locale: ru })}
+                    </span>
                   )}
                 </div>
-                <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <p className="text-xs truncate mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                  {chat.lastMessage
+                    ? `${chat.lastMessage.senderName.split(' ')[0]}: ${chat.lastMessage.content}`
+                    : 'Нет сообщений'}
+                </p>
               </div>
-            )
-          })}
+              <svg className="w-4 h-4 shrink-0" style={{ color: 'var(--text-faint)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          ))}
         </div>
       )}
     </div>

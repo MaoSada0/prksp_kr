@@ -182,6 +182,7 @@ public class SessionService {
                 .sessionId(comment.getSession().getId())
                 .authorId(comment.getAuthor().getId())
                 .authorName(comment.getAuthor().getFirstName() + " " + comment.getAuthor().getLastName())
+                .authorPhotoUrl(comment.getAuthor().getPhotoUrl())
                 .authorRole(comment.getAuthor().getRole())
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt())

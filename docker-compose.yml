@@ -1,4 +1,22 @@
 services:
+  minio:
+    image: minio/minio:latest
+    container_name: psychology_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   postgres:
     image: postgres:16-alpine
     container_name: psychology_postgres
@@ -30,10 +48,18 @@ services:
       SERVER_PORT: 8080
       JWT_SECRET: 3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
       JWT_EXPIRATION: 86400000
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: avatars
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+      S3_REGION: us-east-1
+      S3_PUBLIC_URL: http://localhost:9000
     ports:
       - "8080:8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     restart: unless-stopped
 
@@ -50,3 +76,4 @@ services:
 
 volumes:
   postgres_data:
+  minio_data:

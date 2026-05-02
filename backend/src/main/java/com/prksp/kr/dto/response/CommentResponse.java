@@ -18,6 +18,7 @@ public class CommentResponse {
     private UUID sessionId;
     private UUID authorId;
     private String authorName;
+    private String authorPhotoUrl;
     private UserRole authorRole;
     private String content;
     private LocalDateTime createdAt;

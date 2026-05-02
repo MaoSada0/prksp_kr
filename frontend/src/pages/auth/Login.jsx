@@ -30,48 +30,38 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--bg)' }}>
+      <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-indigo-600">PsychConnect</h1>
-          <p className="text-gray-500 mt-2">Онлайн-консультации с психологом</p>
+          <div className="text-2xl font-bold mb-1" style={{ color: 'var(--blue)' }}>PsychConnect</div>
+          <div className="text-sm" style={{ color: 'var(--text-muted)' }}>Войдите в свой аккаунт</div>
         </div>
 
         <div className="card">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Вход</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="label">Email</label>
-              <input
-                type="email"
-                className="input"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                required
-                placeholder="example@mail.ru"
-              />
+              <input type="email" className="input" value={form.email}
+                onChange={e => setForm({ ...form, email: e.target.value })}
+                required placeholder="example@mail.ru" />
             </div>
             <div>
               <label className="label">Пароль</label>
-              <input
-                type="password"
-                className="input"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                required
-                placeholder="••••••••"
-              />
+              <input type="password" className="input" value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
+                required placeholder="••••••••" />
             </div>
             <button type="submit" className="btn-primary w-full" disabled={loading}>
               {loading ? 'Входим...' : 'Войти'}
             </button>
           </form>
-          <p className="text-center text-sm text-gray-500 mt-4">
-            Нет аккаунта?{' '}
-            <Link to="/register" className="text-indigo-600 hover:underline font-medium">
+
+          <div className="mt-4 pt-4 text-center text-sm" style={{ borderTop: '1px solid var(--border-light)' }}>
+            <span style={{ color: 'var(--text-muted)' }}>Нет аккаунта? </span>
+            <Link to="/register" className="font-semibold" style={{ color: 'var(--blue)', textDecoration: 'none' }}>
               Зарегистрироваться
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </div>

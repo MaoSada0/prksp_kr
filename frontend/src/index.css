@@ -2,27 +2,109 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg:           #F0F4F8;
+  --surface:      #FFFFFF;
+  --blue:         #1A5EA8;
+  --blue-light:   #E8F1FB;
+  --blue-mid:     #9BBDE0;
+  --blue-dark:    #0F3D72;
+  --blue-hover:   #1550A0;
+  --green:        #1A6B42;
+  --green-light:  #E4F3EB;
+  --green-mid:    #7DC4A0;
+  --red:          #B91C1C;
+  --red-light:    #FDECEC;
+  --amber:        #92600A;
+  --amber-light:  #FEF3E0;
+  --text:         #0F2035;
+  --text-muted:   #5A6A7E;
+  --text-faint:   #9AAAB8;
+  --border:       #D2DCE8;
+  --border-light: #E8EEF6;
+  --shadow:       0 1px 4px rgba(15, 32, 53, 0.08);
+  --shadow-hover: 0 4px 12px rgba(15, 32, 53, 0.12);
+}
+
+* { box-sizing: border-box; }
+
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Mulish', system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Mulish', system-ui, sans-serif;
+  font-weight: 700;
 }
 
 @layer components {
   .btn-primary {
-    @apply bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center px-5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: var(--blue);
+    color: #fff;
   }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--blue-hover);
+  }
+
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 px-4 py-2 rounded-lg font-medium transition-colors;
+    @apply inline-flex items-center justify-center px-5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150;
+    background-color: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
   }
+  .btn-secondary:hover {
+    background-color: var(--blue-light);
+    border-color: var(--blue-mid);
+    color: var(--blue-dark);
+  }
+
   .btn-danger {
-    @apply bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium transition-colors;
+    @apply inline-flex items-center justify-center px-5 py-2 rounded-lg text-sm font-semibold transition-colors duration-150;
+    background-color: var(--red-light);
+    color: var(--red);
+    border: 1px solid #F5C0C0;
   }
+  .btn-danger:hover {
+    background-color: #FBDADA;
+  }
+
   .input {
-    @apply w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm;
+    @apply w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors duration-150;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Mulish', system-ui, sans-serif;
   }
+  .input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(26, 94, 168, 0.10);
+  }
+  .input::placeholder {
+    color: var(--text-faint);
+  }
+
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-100 p-6;
+    @apply rounded-xl p-6;
+    background-color: var(--surface);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow);
   }
+
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+    @apply block text-xs font-semibold mb-1;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
   }
+
+  .badge {
+    @apply inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded;
+  }
+  .badge-blue   { @apply badge; background-color: var(--blue-light); color: var(--blue-dark); }
+  .badge-green  { @apply badge; background-color: var(--green-light); color: var(--green); }
+  .badge-red    { @apply badge; background-color: var(--red-light); color: var(--red); }
+  .badge-amber  { @apply badge; background-color: var(--amber-light); color: var(--amber); }
 }

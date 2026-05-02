@@ -17,6 +17,7 @@ public class ReviewResponse {
     private UUID psychologistId;
     private UUID clientId;
     private String clientName;
+    private String clientPhotoUrl;
     private Integer rating;
     private String content;
     private LocalDateTime createdAt;

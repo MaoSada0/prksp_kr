@@ -107,8 +107,10 @@ public class ChatService {
                 .id(chat.getId())
                 .clientId(chat.getClient().getId())
                 .clientName(chat.getClient().getFirstName() + " " + chat.getClient().getLastName())
+                .clientPhotoUrl(chat.getClient().getPhotoUrl())
                 .psychologistId(chat.getPsychologist().getId())
                 .psychologistName(chat.getPsychologist().getFirstName() + " " + chat.getPsychologist().getLastName())
+                .psychologistPhotoUrl(chat.getPsychologist().getPhotoUrl())
                 .createdAt(chat.getCreatedAt())
                 .lastMessage(lastMessage)
                 .build();

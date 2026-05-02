@@ -11,6 +11,9 @@ import ChatRoom from './pages/chats/ChatRoom'
 import SessionList from './pages/sessions/SessionList'
 import SessionDetail from './pages/sessions/SessionDetail'
 import Profile from './pages/profile/Profile'
+import ClientProfile from './pages/profile/ClientProfile'
+import Services from './pages/profile/Services'
+import Schedule from './pages/profile/Schedule'
 
 function HomeRedirect() {
   const { user } = useAuth()
@@ -18,6 +21,12 @@ function HomeRedirect() {
   return user.role === 'PSYCHOLOGIST'
     ? <Navigate to="/sessions" replace />
     : <Navigate to="/psychologists" replace />
+}
+
+function ProfilePage() {
+  const { user } = useAuth()
+  if (!user) return null
+  return user.role === 'PSYCHOLOGIST' ? <Profile /> : <ClientProfile />
 }
 
 export default function App() {
@@ -33,7 +42,9 @@ export default function App() {
         <Route path="/chats/:id" element={<ChatRoom />} />
         <Route path="/sessions" element={<SessionList />} />
         <Route path="/sessions/:id" element={<SessionDetail />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/schedule" element={<Schedule />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

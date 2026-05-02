@@ -7,10 +7,10 @@ import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
 const statusConfig = {
-  SCHEDULED: { label: 'Запланирована', cls: 'bg-blue-100 text-blue-700' },
-  IN_PROGRESS: { label: 'Идёт', cls: 'bg-yellow-100 text-yellow-700' },
-  COMPLETED: { label: 'Завершена', cls: 'bg-green-100 text-green-700' },
-  CANCELLED: { label: 'Отменена', cls: 'bg-red-100 text-red-700' },
+  SCHEDULED:   { label: 'Запланирована', cls: 'badge-blue' },
+  IN_PROGRESS: { label: 'Идёт',          cls: 'badge-amber' },
+  COMPLETED:   { label: 'Завершена',     cls: 'badge-green' },
+  CANCELLED:   { label: 'Отменена',      cls: 'badge-red' },
 }
 
 export default function SessionList() {
@@ -20,66 +20,55 @@ export default function SessionList() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    getSessions()
-      .then(setSessions)
-      .finally(() => setLoading(false))
+    getSessions().then(setSessions).finally(() => setLoading(false))
   }, [])
 
   if (loading) return <Spinner className="py-20" />
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Сессии</h1>
+      <h1 className="text-xl font-bold mb-6" style={{ color: 'var(--text)' }}>Сессии</h1>
 
       {sessions.length === 0 ? (
-        <div className="card text-center py-16 text-gray-400">
-          <p className="text-lg mb-2">Нет сессий</p>
+        <div className="card text-center py-16">
+          <p className="text-base mb-2" style={{ color: 'var(--text-faint)' }}>Нет сессий</p>
           {user?.role === 'CLIENT' && (
-            <p className="text-sm">
-              Запишитесь к психологу через{' '}
-              <button
-                className="text-indigo-600 hover:underline"
-                onClick={() => navigate('/psychologists')}
-              >
-                каталог
+            <p className="text-sm" style={{ color: 'var(--text-faint)' }}>
+              Запишитесь через{' '}
+              <button className="font-semibold" style={{ color: 'var(--blue)' }} onClick={() => navigate('/psychologists')}>
+                каталог психологов
               </button>
             </p>
           )}
         </div>
       ) : (
-        <div className="space-y-3">
-          {sessions.map((session) => {
-            const status = statusConfig[session.status]
-            const person =
-              user?.role === 'CLIENT' ? session.psychologistName : session.clientName
+        <div className="space-y-2">
+          {sessions.map(s => {
+            const st = statusConfig[s.status]
+            const person = user?.role === 'CLIENT' ? s.psychologistName : s.clientName
             return (
-              <div
-                key={session.id}
-                className="card hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => navigate(`/sessions/${session.id}`)}
+              <div key={s.id} className="card cursor-pointer transition-shadow duration-150 !py-4"
+                onClick={() => navigate(`/sessions/${s.id}`)}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = 'var(--shadow-hover)'}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = 'var(--shadow)'}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="font-semibold text-gray-900">{session.serviceName}</span>
-                      <span
-                        className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${status.cls}`}
-                      >
-                        {status.label}
-                      </span>
+                    <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                      <span className="font-semibold text-sm" style={{ color: 'var(--text)' }}>{s.serviceName}</span>
+                      <span className={st.cls}>{st.label}</span>
                     </div>
-                    <p className="text-sm text-gray-500">
-                      {user?.role === 'CLIENT' ? 'Психолог:' : 'Клиент:'} {person}
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {user?.role === 'CLIENT' ? 'Психолог: ' : 'Клиент: '}{person}
                     </p>
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-medium text-gray-900">
-                      {format(new Date(session.scheduledAt), 'd MMM yyyy', { locale: ru })}
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-semibold" style={{ color: 'var(--text)' }}>
+                      {format(new Date(s.scheduledAt), 'd MMM', { locale: ru })}
                     </p>
-                    <p className="text-sm text-gray-500">
-                      {format(new Date(session.scheduledAt), 'HH:mm', { locale: ru })}
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {format(new Date(s.scheduledAt), 'HH:mm')} · {s.serviceDurationMinutes} мин
                     </p>
-                    <p className="text-xs text-gray-400">{session.serviceDurationMinutes} мин</p>
                   </div>
                 </div>
               </div>

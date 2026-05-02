@@ -19,4 +19,5 @@ public class AuthResponse {
     private String firstName;
     private String lastName;
     private UserRole role;
+    private String photoUrl;
 }

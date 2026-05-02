@@ -5,10 +5,12 @@ import Spinner from '../../components/Spinner'
 import Avatar from '../../components/Avatar'
 
 function Stars({ rating }) {
-  if (!rating) return <span className="text-xs text-gray-400">Нет оценок</span>
+  if (!rating) return <span className="text-xs" style={{ color: 'var(--text-faint)' }}>Нет оценок</span>
   return (
-    <span className="text-sm text-amber-500 font-medium">
-      {'★'.repeat(Math.round(rating))}{'☆'.repeat(5 - Math.round(rating))} {rating.toFixed(1)}
+    <span className="text-xs font-semibold" style={{ color: '#D97706' }}>
+      {'★'.repeat(Math.round(rating))}{'☆'.repeat(5 - Math.round(rating))}
+      {' '}
+      <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>{rating.toFixed(1)}</span>
     </span>
   )
 }
@@ -21,74 +23,60 @@ export default function PsychologistList() {
 
   const fetchData = useCallback(async (q) => {
     setLoading(true)
-    try {
-      const data = await getPsychologists(q)
-      setPsychologists(data)
-    } finally {
-      setLoading(false)
-    }
+    try { setPsychologists(await getPsychologists(q)) }
+    finally { setLoading(false) }
   }, [])
 
   useEffect(() => {
-    const timer = setTimeout(() => fetchData(search), 300)
-    return () => clearTimeout(timer)
+    const t = setTimeout(() => fetchData(search), 300)
+    return () => clearTimeout(t)
   }, [search, fetchData])
 
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Психологи</h1>
-          <p className="text-gray-500 text-sm mt-1">Найдите специалиста для вас</p>
+        <h1 className="text-xl font-bold" style={{ color: 'var(--text)' }}>Психологи</h1>
+        <div className="relative sm:w-64">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: 'var(--text-faint)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input type="search" className="input pl-9" placeholder="Поиск..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
-        <input
-          type="search"
-          className="input sm:w-72"
-          placeholder="Поиск по имени..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
       </div>
 
       {loading ? (
         <Spinner className="py-20" />
       ) : psychologists.length === 0 ? (
-        <div className="card text-center py-16 text-gray-400">Психологи не найдены</div>
+        <div className="card text-center py-16" style={{ color: 'var(--text-faint)' }}>Психологи не найдены</div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {psychologists.map((p) => (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {psychologists.map(p => (
             <div
               key={p.id}
-              className="card hover:shadow-md transition-shadow cursor-pointer"
+              className="card cursor-pointer transition-shadow duration-150"
               onClick={() => navigate(`/psychologists/${p.id}`)}
+              onMouseEnter={e => e.currentTarget.style.boxShadow = 'var(--shadow-hover)'}
+              onMouseLeave={e => e.currentTarget.style.boxShadow = 'var(--shadow)'}
             >
               <div className="flex items-start gap-3 mb-3">
-                <Avatar name={`${p.firstName} ${p.lastName}`} size="lg" />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold text-gray-900">
+                <Avatar name={`${p.firstName} ${p.lastName}`} size="md" src={p.photoUrl} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start gap-2 flex-wrap">
+                    <span className="font-semibold text-sm" style={{ color: 'var(--text)' }}>
                       {p.firstName} {p.lastName}
-                    </h3>
-                    {p.isVerified && (
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                        ✓ Верифицирован
-                      </span>
-                    )}
+                    </span>
+                    {p.isVerified && <span className="badge-blue">✓ Верифицирован</span>}
                   </div>
-                  <Stars rating={p.averageRating} />
+                  <div className="mt-1"><Stars rating={p.averageRating} /></div>
                 </div>
               </div>
 
               {p.bio && (
-                <p className="text-sm text-gray-600 line-clamp-2 mb-3">{p.bio}</p>
+                <p className="text-xs line-clamp-2 mb-3" style={{ color: 'var(--text-muted)' }}>{p.bio}</p>
               )}
 
-              <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>
-                  {p.experienceYears
-                    ? `Опыт: ${p.experienceYears} лет`
-                    : 'Опыт не указан'}
-                </span>
+              <div className="flex justify-between text-xs pt-2" style={{ borderTop: '1px solid var(--border-light)', color: 'var(--text-faint)' }}>
+                <span>{p.experienceYears ? `${p.experienceYears} лет опыта` : 'Опыт не указан'}</span>
                 <span>{p.reviewCount} отзыв(ов)</span>
               </div>
             </div>

@@ -40,6 +40,8 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
+    private String photoUrl;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
