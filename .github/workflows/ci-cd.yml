@@ -62,6 +62,7 @@ jobs:
           railway up \
             --project 1f28f0a9-5f9b-4d71-9f63-9ba67ee131a8 \
             --service 67c07d0f-38c4-40f0-9060-6cda42c76d80 \
+            --environment production \
             --detach
 
       - name: Deploy frontend
@@ -72,4 +73,5 @@ jobs:
           railway up \
             --project 1f28f0a9-5f9b-4d71-9f63-9ba67ee131a8 \
             --service 01ca0d3a-5a23-48dc-a092-947e4405f62c \
+            --environment production \
             --detach
