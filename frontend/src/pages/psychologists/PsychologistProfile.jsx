@@ -7,6 +7,7 @@ import { getOrCreateChat } from '../../api/chats'
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import Avatar from '../../components/Avatar'
+import PhotoLightbox from '../../components/PhotoLightbox'
 import CreateSessionModal from '../../components/CreateSessionModal'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
@@ -38,6 +39,7 @@ export default function PsychologistProfile() {
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [lightbox, setLightbox] = useState(false)
   const [reviewForm, setReviewForm] = useState({ rating: 5, content: '' })
   const [submitting, setSubmitting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -95,9 +97,22 @@ export default function PsychologistProfile() {
 
   return (
     <div className="space-y-5">
+      {lightbox && psychologist.photoUrl && (
+        <PhotoLightbox
+          src={psychologist.photoUrl}
+          name={`${psychologist.firstName} ${psychologist.lastName}`}
+          onClose={() => setLightbox(false)}
+        />
+      )}
+
       <div className="card">
         <div className="flex flex-col sm:flex-row items-start gap-5">
-          <Avatar name={`${psychologist.firstName} ${psychologist.lastName}`} size="xl" src={psychologist.photoUrl} />
+          <div
+            className={psychologist.photoUrl ? 'cursor-zoom-in flex-shrink-0' : 'flex-shrink-0'}
+            onClick={() => psychologist.photoUrl && setLightbox(true)}
+          >
+            <Avatar name={`${psychologist.firstName} ${psychologist.lastName}`} size="xl" src={psychologist.photoUrl} />
+          </div>
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>

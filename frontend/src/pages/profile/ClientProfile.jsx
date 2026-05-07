@@ -3,12 +3,14 @@ import toast from 'react-hot-toast'
 import { updateMe, uploadAvatar } from '../../api/users'
 import { useAuth } from '../../context/AuthContext'
 import Avatar from '../../components/Avatar'
+import PhotoLightbox from '../../components/PhotoLightbox'
 
 export default function ClientProfile() {
   const { user, updateUser } = useAuth()
   const [form, setForm] = useState({ firstName: user?.firstName || '', lastName: user?.lastName || '' })
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [lightbox, setLightbox] = useState(false)
   const fileRef = useRef(null)
 
   const handleAvatarChange = async (e) => {
@@ -41,21 +43,33 @@ export default function ClientProfile() {
 
   return (
     <div className="space-y-5">
+      {lightbox && user?.photoUrl && (
+        <PhotoLightbox src={user.photoUrl} name={`${user?.firstName} ${user?.lastName}`} onClose={() => setLightbox(false)} />
+      )}
+
       <div className="card flex items-center gap-4">
-        <div className="relative group cursor-pointer flex-shrink-0" onClick={() => fileRef.current?.click()}>
-          <Avatar name={`${user?.firstName} ${user?.lastName}`} size="xl" src={user?.photoUrl} />
-          <div className="absolute inset-0 rounded-full flex items-center justify-center transition-opacity duration-150"
-            style={{ opacity: uploading ? 1 : 0, backgroundColor: 'rgba(15,32,53,0.5)' }}
-            onMouseEnter={e => !uploading && (e.currentTarget.style.opacity = '1')}
-            onMouseLeave={e => !uploading && (e.currentTarget.style.opacity = '0')}>
+        <div className="relative flex-shrink-0">
+          <div
+            className={user?.photoUrl ? 'cursor-zoom-in' : 'cursor-pointer'}
+            onClick={() => user?.photoUrl ? setLightbox(true) : fileRef.current?.click()}
+          >
+            <Avatar name={`${user?.firstName} ${user?.lastName}`} size="xl" src={user?.photoUrl} />
+          </div>
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full flex items-center justify-center shadow-md"
+            style={{ backgroundColor: 'var(--blue)', color: 'white', opacity: uploading ? 0.7 : 1 }}
+            title="Изменить фото"
+          >
             {uploading
-              ? <div className="w-5 h-5 rounded-full animate-spin" style={{ border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff' }} />
-              : <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="white" strokeWidth={1.8}>
+              ? <div className="w-4 h-4 rounded-full animate-spin" style={{ border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff' }} />
+              : <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
             }
-          </div>
+          </button>
         </div>
         <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarChange} />
         <div>
