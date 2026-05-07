@@ -7,6 +7,7 @@ import { getMessages, sendMessage, getChats } from '../../api/chats'
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import Avatar from '../../components/Avatar'
+import UserProfileModal from '../../components/UserProfileModal'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
@@ -20,6 +21,7 @@ export default function ChatRoom() {
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
   const bottomRef = useRef(null)
 
   const partnerName = chat
@@ -27,6 +29,9 @@ export default function ChatRoom() {
     : ''
   const partnerPhoto = chat
     ? user?.role === 'CLIENT' ? chat.psychologistPhotoUrl : chat.clientPhotoUrl
+    : null
+  const partnerId = chat
+    ? user?.role === 'CLIENT' ? chat.psychologistId : chat.clientId
     : null
 
   useEffect(() => {
@@ -70,6 +75,10 @@ export default function ChatRoom() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
+      {showProfile && partnerId && (
+        <UserProfileModal userId={partnerId} onClose={() => setShowProfile(false)} />
+      )}
+
       <div className="card !py-3 !px-4 mb-3 flex items-center gap-3">
         <button
           onClick={() => navigate('/chats')}
@@ -80,13 +89,15 @@ export default function ChatRoom() {
         >
           ←
         </button>
-        <Avatar name={partnerName} size="md" src={partnerPhoto} />
-        <div>
-          <p className="font-semibold text-sm" style={{ color: 'var(--text)' }}>{partnerName}</p>
-          <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-            {user?.role === 'CLIENT' ? 'Психолог' : 'Клиент'}
-          </p>
-        </div>
+        <button className="flex items-center gap-3 text-left" onClick={() => setShowProfile(true)}>
+          <Avatar name={partnerName} size="md" src={partnerPhoto} />
+          <div>
+            <p className="font-semibold text-sm hover:underline" style={{ color: 'var(--text)' }}>{partnerName}</p>
+            <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
+              {user?.role === 'CLIENT' ? 'Психолог' : 'Клиент'}
+            </p>
+          </div>
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-2 px-1 pb-2">

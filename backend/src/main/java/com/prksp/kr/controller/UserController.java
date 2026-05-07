@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -30,6 +32,13 @@ public class UserController {
         currentUser.setLastName(request.getLastName());
         User saved = userRepository.save(currentUser);
         return ResponseEntity.ok(toResponse(saved));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<AuthResponse> getUser(@PathVariable UUID id) {
+        return userRepository.findById(id)
+                .map(u -> ResponseEntity.ok(toResponse(u)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     private AuthResponse toResponse(User user) {

@@ -5,6 +5,7 @@ import { getSession, updateSessionStatus, getComments, addComment } from '../../
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import Avatar from '../../components/Avatar'
+import UserProfileModal from '../../components/UserProfileModal'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
@@ -25,6 +26,7 @@ export default function SessionDetail() {
   const [loading, setLoading] = useState(true)
   const [commentText, setCommentText] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [profileUserId, setProfileUserId] = useState(null)
 
   useEffect(() => {
     Promise.all([getSession(id), getComments(id)])
@@ -60,6 +62,10 @@ export default function SessionDetail() {
 
   return (
     <div className="space-y-5">
+      {profileUserId && (
+        <UserProfileModal userId={profileUserId} onClose={() => setProfileUserId(null)} />
+      )}
+
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate('/sessions')}
@@ -87,8 +93,8 @@ export default function SessionDetail() {
         </div>
 
         <div className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm pt-3" style={{ borderTop: '1px solid var(--border-light)' }}>
-          <Row label="Клиент"      value={session.clientName} />
-          <Row label="Психолог"    value={session.psychologistName} />
+          <Row label="Клиент" value={session.clientName} onClick={() => setProfileUserId(session.clientId)} />
+          <Row label="Психолог" value={session.psychologistName} onClick={() => setProfileUserId(session.psychologistId)} />
           <Row label="Длительность" value={`${session.serviceDurationMinutes} мин`} />
           <Row label="Дата" value={format(new Date(session.scheduledAt), 'd MMMM yyyy, HH:mm', { locale: ru })} />
           {session.startedAt && <Row label="Начата"    value={format(new Date(session.startedAt), 'HH:mm')} />}
@@ -150,11 +156,21 @@ export default function SessionDetail() {
   )
 }
 
-function Row({ label, value }) {
+function Row({ label, value, onClick }) {
   return (
     <div>
       <span style={{ color: 'var(--text-muted)' }}>{label}: </span>
-      <span className="font-semibold" style={{ color: 'var(--text)' }}>{value}</span>
+      {onClick ? (
+        <button
+          onClick={onClick}
+          className="font-semibold hover:underline"
+          style={{ color: 'var(--blue)' }}
+        >
+          {value}
+        </button>
+      ) : (
+        <span className="font-semibold" style={{ color: 'var(--text)' }}>{value}</span>
+      )}
     </div>
   )
 }
