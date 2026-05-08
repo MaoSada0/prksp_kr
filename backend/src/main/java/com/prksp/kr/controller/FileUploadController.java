@@ -6,6 +6,8 @@ import com.prksp.kr.entity.UserRole;
 import com.prksp.kr.repository.PsychologistProfileRepository;
 import com.prksp.kr.repository.UserRepository;
 import com.prksp.kr.service.S3Service;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +20,7 @@ import java.util.Set;
 @RestController
 @RequestMapping("/api/upload")
 @RequiredArgsConstructor
+@Tag(name = "Upload", description = "Загрузка файлов")
 public class FileUploadController {
 
     private static final Set<String> ALLOWED_TYPES = Set.of(
@@ -28,7 +31,8 @@ public class FileUploadController {
     private final UserRepository userRepository;
     private final PsychologistProfileRepository profileRepository;
 
-    @PostMapping("/avatar")
+    @PostMapping(value = "/avatar", consumes = "multipart/form-data")
+    @Operation(summary = "Загрузить аватар (multipart/form-data, поле file)")
     public ResponseEntity<AuthResponse> uploadAvatar(
             @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal User currentUser) throws IOException {

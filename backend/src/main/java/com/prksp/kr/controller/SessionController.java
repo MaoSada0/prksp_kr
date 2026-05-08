@@ -7,6 +7,8 @@ import com.prksp.kr.dto.response.CommentResponse;
 import com.prksp.kr.dto.response.SessionResponse;
 import com.prksp.kr.entity.User;
 import com.prksp.kr.service.SessionService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,11 +22,13 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/sessions")
 @RequiredArgsConstructor
+@Tag(name = "Sessions", description = "Консультационные сессии")
 public class SessionController {
 
     private final SessionService sessionService;
 
     @PostMapping
+    @Operation(summary = "Забронировать сессию (клиент)")
     public ResponseEntity<SessionResponse> createSession(
             @AuthenticationPrincipal User currentUser,
             @Valid @RequestBody CreateSessionRequest request) {
@@ -33,11 +37,13 @@ public class SessionController {
     }
 
     @GetMapping
+    @Operation(summary = "Свои сессии")
     public ResponseEntity<List<SessionResponse>> getSessions(@AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(sessionService.getUserSessions(currentUser));
     }
 
     @GetMapping("/{sessionId}")
+    @Operation(summary = "Сессия по ID")
     public ResponseEntity<SessionResponse> getSession(
             @AuthenticationPrincipal User currentUser,
             @PathVariable UUID sessionId) {
@@ -45,6 +51,7 @@ public class SessionController {
     }
 
     @PatchMapping("/{sessionId}/status")
+    @Operation(summary = "Обновить статус сессии (SCHEDULED → IN_PROGRESS → COMPLETED / CANCELLED)")
     public ResponseEntity<SessionResponse> updateStatus(
             @AuthenticationPrincipal User currentUser,
             @PathVariable UUID sessionId,
@@ -53,6 +60,7 @@ public class SessionController {
     }
 
     @GetMapping("/{sessionId}/comments")
+    @Operation(summary = "Комментарии сессии")
     public ResponseEntity<List<CommentResponse>> getComments(
             @AuthenticationPrincipal User currentUser,
             @PathVariable UUID sessionId) {
@@ -60,6 +68,7 @@ public class SessionController {
     }
 
     @PostMapping("/{sessionId}/comments")
+    @Operation(summary = "Добавить комментарий к сессии")
     public ResponseEntity<CommentResponse> addComment(
             @AuthenticationPrincipal User currentUser,
             @PathVariable UUID sessionId,

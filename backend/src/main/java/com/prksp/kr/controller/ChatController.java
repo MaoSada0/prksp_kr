@@ -5,6 +5,8 @@ import com.prksp.kr.dto.response.ChatResponse;
 import com.prksp.kr.dto.response.MessageResponse;
 import com.prksp.kr.entity.User;
 import com.prksp.kr.service.ChatService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,16 +24,19 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/chats")
 @RequiredArgsConstructor
+@Tag(name = "Chats", description = "Чаты и сообщения")
 public class ChatController {
 
     private final ChatService chatService;
 
     @GetMapping
+    @Operation(summary = "Свои чаты")
     public ResponseEntity<List<ChatResponse>> getUserChats(@AuthenticationPrincipal User currentUser) {
         return ResponseEntity.ok(chatService.getUserChats(currentUser));
     }
 
     @PostMapping
+    @Operation(summary = "Открыть или создать чат с психологом (?psychologistId=)")
     public ResponseEntity<ChatResponse> getOrCreateChat(
             @AuthenticationPrincipal User currentUser,
             @RequestParam UUID psychologistId) {
@@ -40,6 +45,7 @@ public class ChatController {
     }
 
     @GetMapping("/{chatId}/messages")
+    @Operation(summary = "История сообщений чата")
     public ResponseEntity<List<MessageResponse>> getMessages(
             @AuthenticationPrincipal User currentUser,
             @PathVariable UUID chatId) {
@@ -47,6 +53,7 @@ public class ChatController {
     }
 
     @PostMapping("/{chatId}/messages")
+    @Operation(summary = "Отправить сообщение (REST; также доступен WebSocket /app/chat.send.{chatId})")
     public ResponseEntity<MessageResponse> sendMessage(
             @AuthenticationPrincipal User currentUser,
             @PathVariable UUID chatId,
