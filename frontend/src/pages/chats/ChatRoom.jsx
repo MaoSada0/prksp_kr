@@ -74,7 +74,7 @@ export default function ChatRoom() {
   if (loading) return <Spinner className="py-20" />
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)]">
+    <div className="flex flex-col" style={{ height: 'calc(100dvh - 3.5rem - 2rem)', maxHeight: 'calc(100dvh - 3.5rem - 2rem)' }}>
       {showProfile && partnerId && (
         <UserProfileModal userId={partnerId} onClose={() => setShowProfile(false)} />
       )}
@@ -82,7 +82,7 @@ export default function ChatRoom() {
       <div className="card !py-3 !px-4 mb-3 flex items-center gap-3">
         <button
           onClick={() => navigate('/chats')}
-          className="text-xs px-2.5 py-1.5 rounded-md mr-1 transition-colors duration-100"
+          className="text-sm px-3 py-2 rounded-md mr-1 transition-colors duration-100 shrink-0"
           style={{ border: '1px solid var(--border)', color: 'var(--text-muted)' }}
           onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--blue-light)'}
           onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
@@ -110,7 +110,7 @@ export default function ChatRoom() {
           const isMine = msg.senderId === user?.userId
           return (
             <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[72%] flex flex-col gap-0.5 ${isMine ? 'items-end' : 'items-start'}`}>
+              <div className={`max-w-[85%] sm:max-w-[72%] flex flex-col gap-0.5 ${isMine ? 'items-end' : 'items-start'}`}>
                 {!isMine && (
                   <span className="text-xs ml-1" style={{ color: 'var(--text-faint)' }}>{msg.senderName}</span>
                 )}

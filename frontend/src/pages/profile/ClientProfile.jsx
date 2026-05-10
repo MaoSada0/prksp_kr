@@ -82,7 +82,7 @@ export default function ClientProfile() {
       <div className="card">
         <h2 className="text-base font-bold mb-4" style={{ color: 'var(--text)' }}>Редактировать профиль</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="label">Имя</label>
               <input type="text" className="input" value={form.firstName}

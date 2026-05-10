@@ -58,11 +58,11 @@ export default function Schedule() {
         </button>
       </div>
 
-      <div className="flex items-center gap-2 mb-4">
-        <button className="btn-secondary !px-2.5 !py-1.5 text-sm" onClick={() => shiftDate(-1)}>‹</button>
-        <input type="date" className="input w-auto" value={date} onChange={e => setDate(e.target.value)} />
-        <button className="btn-secondary !px-2.5 !py-1.5 text-sm" onClick={() => shiftDate(1)}>›</button>
-        <span className="text-sm capitalize" style={{ color: 'var(--text-muted)' }}>
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <button className="btn-secondary !px-3 !py-2 text-sm" onClick={() => shiftDate(-1)}>‹</button>
+        <input type="date" className="input flex-1 min-w-0 sm:flex-none sm:w-auto" value={date} onChange={e => setDate(e.target.value)} />
+        <button className="btn-secondary !px-3 !py-2 text-sm" onClick={() => shiftDate(1)}>›</button>
+        <span className="text-sm capitalize w-full sm:w-auto" style={{ color: 'var(--text-muted)' }}>
           {format(new Date(date + 'T12:00'), 'EEEE, d MMM', { locale: ru })}
         </span>
       </div>
@@ -73,7 +73,7 @@ export default function Schedule() {
           <p className="text-sm font-semibold" style={{ color: 'var(--blue-dark)' }}>
             Слоты на {format(new Date(date + 'T12:00'), 'd MMMM', { locale: ru })}
           </p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-2">
             <div>
               <label className="label">С</label>
               <input type="time" className="input" value={slotForm.fromTime}

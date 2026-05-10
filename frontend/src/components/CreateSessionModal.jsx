@@ -82,7 +82,7 @@ export default function CreateSessionModal({ psychologistId, services, onClose, 
                   Нет доступных слотов
                 </div>
               ) : (
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
                   {slots.map(slot => {
                     const active = form.slotId === slot.id
                     return (

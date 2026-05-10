@@ -68,7 +68,7 @@ export default function Services() {
                 onChange={e => setForm({ ...form, name: e.target.value })}
                 required placeholder="Индивидуальная консультация" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-3">
               <div>
                 <label className="label">Цена (₽)</label>
                 <input type="number" className="input" value={form.price}

@@ -34,7 +34,7 @@ export default function Register() {
 
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-3">
               <div>
                 <label className="label">Имя</label>
                 <input type="text" className="input" value={form.firstName}
@@ -65,7 +65,7 @@ export default function Register() {
 
             <div>
               <label className="label">Я регистрируюсь как</label>
-              <div className="grid grid-cols-2 gap-2 mt-1">
+              <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-2 mt-1">
                 {[
                   { value: 'CLIENT', label: 'Клиент', desc: 'Ищу специалиста' },
                   { value: 'PSYCHOLOGIST', label: 'Психолог', desc: 'Принимаю клиентов' },
