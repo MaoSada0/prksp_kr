@@ -4,6 +4,7 @@ import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import Landing from './pages/Landing'
 import PsychologistList from './pages/psychologists/PsychologistList'
 import PsychologistProfile from './pages/psychologists/PsychologistProfile'
 import ChatList from './pages/chats/ChatList'
@@ -17,7 +18,7 @@ import Schedule from './pages/profile/Schedule'
 
 function HomeRedirect() {
   const { user } = useAuth()
-  if (!user) return <Navigate to="/login" replace />
+  if (!user) return <Landing />
   return user.role === 'PSYCHOLOGIST'
     ? <Navigate to="/sessions" replace />
     : <Navigate to="/psychologists" replace />
@@ -32,10 +33,10 @@ function ProfilePage() {
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<HomeRedirect />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
-        <Route path="/" element={<HomeRedirect />} />
         <Route path="/psychologists" element={<PsychologistList />} />
         <Route path="/psychologists/:id" element={<PsychologistProfile />} />
         <Route path="/chats" element={<ChatList />} />
