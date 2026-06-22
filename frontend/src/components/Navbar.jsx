@@ -19,7 +19,14 @@ export default function Navbar() {
     { to: '/schedule', label: 'Расписание' },
     { to: '/services', label: 'Услуги' },
   ]
-  const links = user?.role === 'PSYCHOLOGIST' ? psychologistLinks : clientLinks
+  const adminLinks = [
+    { to: '/admin', label: 'Пользователи' },
+  ]
+  const links = user?.role === 'ADMIN'
+    ? adminLinks
+    : user?.role === 'PSYCHOLOGIST'
+      ? psychologistLinks
+      : clientLinks
 
   const handleNav = (to) => { setMenuOpen(false); navigate(to) }
 

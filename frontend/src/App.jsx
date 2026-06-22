@@ -15,10 +15,12 @@ import Profile from './pages/profile/Profile'
 import ClientProfile from './pages/profile/ClientProfile'
 import Services from './pages/profile/Services'
 import Schedule from './pages/profile/Schedule'
+import AdminDashboard from './pages/admin/AdminDashboard'
 
 function HomeRedirect() {
   const { user } = useAuth()
   if (!user) return <Landing />
+  if (user.role === 'ADMIN') return <Navigate to="/admin" replace />
   return user.role === 'PSYCHOLOGIST'
     ? <Navigate to="/sessions" replace />
     : <Navigate to="/psychologists" replace />
@@ -46,6 +48,7 @@ export default function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/services" element={<Services />} />
         <Route path="/schedule" element={<Schedule />} />
+        <Route path="/admin" element={<AdminDashboard />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

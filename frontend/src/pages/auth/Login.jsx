@@ -10,8 +10,11 @@ export default function Login() {
   const { loginSuccess, user } = useAuth()
   const navigate = useNavigate()
 
+  const roleRedirect = (role) =>
+    role === 'ADMIN' ? '/admin' : role === 'PSYCHOLOGIST' ? '/sessions' : '/psychologists'
+
   if (user) {
-    navigate(user.role === 'PSYCHOLOGIST' ? '/sessions' : '/psychologists', { replace: true })
+    navigate(roleRedirect(user.role), { replace: true })
     return null
   }
 
@@ -21,7 +24,7 @@ export default function Login() {
     try {
       const data = await login(form)
       loginSuccess(data)
-      navigate(data.role === 'PSYCHOLOGIST' ? '/sessions' : '/psychologists', { replace: true })
+      navigate(roleRedirect(data.role), { replace: true })
     } catch (err) {
       toast.error(err.response?.data?.message || 'Неверный email или пароль')
     } finally {

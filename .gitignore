@@ -1,3 +1,4 @@
+.env
 backend/target/
 *.class
 *.jar
@@ -11,3 +12,5 @@ backend/mvnw.cmd
 frontend/node_modules/
 frontend/dist/
 report/
+fuzzing_report.md
+fuzzing_testing_section.txt
