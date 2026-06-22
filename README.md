@@ -59,11 +59,35 @@
 
 - Docker и Docker Compose
 
+### Переменные окружения
+
+Скопируй `.env.example` в `.env` и при необходимости измени значения:
+
+```bash
+cp .env.example .env
+```
+
+`.env`:
+```env
+POSTGRES_DB=psychology_db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+
+JWT_SECRET=3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c272e007b
+JWT_EXPIRATION=86400000
+
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
+S3_BUCKET=avatars
+S3_REGION=us-east-1
+```
+
 ### Запуск
 
 ```bash
 git clone <repo-url>
 cd kr
+cp .env.example .env
 docker-compose up
 ```
 
