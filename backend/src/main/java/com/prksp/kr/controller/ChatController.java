@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,12 +54,21 @@ public class ChatController {
     }
 
     @PostMapping("/{chatId}/messages")
-    @Operation(summary = "Отправить сообщение (REST; также доступен WebSocket /app/chat.send.{chatId})")
+    @Operation(summary = "Отправить сообщение (REST)")
     public ResponseEntity<MessageResponse> sendMessage(
             @AuthenticationPrincipal User currentUser,
             @PathVariable UUID chatId,
             @Valid @RequestBody SendMessageRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(chatService.sendMessage(currentUser, chatId, request));
+    }
+
+    @MessageMapping("/chat.send.{chatId}")
+    public void sendMessageWs(
+            @DestinationVariable UUID chatId,
+            @Payload SendMessageRequest request,
+            Principal principal) {
+        User sender = (User) ((UsernamePasswordAuthenticationToken) principal).getPrincipal();
+        chatService.sendMessage(sender, chatId, request);
     }
 }

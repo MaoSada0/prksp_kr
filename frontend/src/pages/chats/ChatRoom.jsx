@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import toast from 'react-hot-toast'
-import { getMessages, sendMessage, getChats } from '../../api/chats'
+import { getMessages, getChats } from '../../api/chats'
 import { useAuth } from '../../context/AuthContext'
 import Spinner from '../../components/Spinner'
 import Avatar from '../../components/Avatar'
@@ -20,8 +20,9 @@ export default function ChatRoom() {
   const [chat, setChat] = useState(null)
   const [text, setText] = useState('')
   const [loading, setLoading] = useState(true)
-  const [sending, setSending] = useState(false)
+  const [connected, setConnected] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
+  const stompClientRef = useRef(null)
   const bottomRef = useRef(null)
 
   const partnerName = chat
@@ -46,29 +47,42 @@ export default function ChatRoom() {
   }, [messages])
 
   useEffect(() => {
+    const token = localStorage.getItem('token')
     const client = new Client({
       webSocketFactory: () => new SockJS('/ws'),
       reconnectDelay: 5000,
+      connectHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
       onConnect: () => {
+        setConnected(true)
         client.subscribe(`/topic/chat.${chatId}`, frame => {
           const msg = JSON.parse(frame.body)
           setMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg])
         })
       },
+      onDisconnect: () => setConnected(false),
+      onStompError: () => setConnected(false),
     })
+    stompClientRef.current = client
     client.activate()
-    return () => client.deactivate()
+    return () => { setConnected(false); client.deactivate() }
   }, [chatId])
 
-  const handleSend = async (e) => {
+  const handleSend = (e) => {
     e.preventDefault()
-    if (!text.trim() || sending) return
+    if (!text.trim() || !connected) return
     const content = text.trim()
     setText('')
-    setSending(true)
-    try { await sendMessage(chatId, { content, type: 'TEXT' }) }
-    catch { toast.error('Ошибка отправки'); setText(content) }
-    finally { setSending(false) }
+    try {
+      stompClientRef.current.publish({
+        destination: `/app/chat.send.${chatId}`,
+        body: JSON.stringify({ content, type: 'TEXT' }),
+      })
+    } catch {
+      toast.error('Ошибка отправки')
+      setText(content)
+    }
   }
 
   if (loading) return <Spinner className="py-20" />
@@ -151,8 +165,8 @@ export default function ChatRoom() {
           placeholder="Напишите сообщение..."
           autoFocus
         />
-        <button type="submit" className="btn-primary px-5" disabled={!text.trim() || sending}>
-          {sending ? '...' : 'Отправить'}
+        <button type="submit" className="btn-primary px-5" disabled={!text.trim() || !connected}>
+          Отправить
         </button>
       </form>
     </div>
